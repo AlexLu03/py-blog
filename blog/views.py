@@ -1,8 +1,9 @@
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404
-from blog.models import Post, Commentary
 from django.core.paginator import Paginator
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404, render
+
 from blog.forms import CommentForm
+from blog.models import Commentary, Post
 
 
 def index(request: HttpRequest) -> HttpResponse:
@@ -15,14 +16,13 @@ def index(request: HttpRequest) -> HttpResponse:
     context = {
         "page_obj": page_obj,
         "posts": posts,
-        # tests expect a context variable named 'post_list'
         "post_list": page_obj,
     }
 
     return render(request, "blog/index.html", context=context)
 
 
-def postdetailview(request: HttpRequest, pk: int) -> HttpResponse:
+def PostDetailView(request: HttpRequest, pk: int) -> HttpResponse:
     post = get_object_or_404(Post.objects.select_related("owner"), id=pk)
 
     comments = Commentary.objects.filter(post=post)
@@ -30,22 +30,16 @@ def postdetailview(request: HttpRequest, pk: int) -> HttpResponse:
 
     if request.method == "POST":
         form = CommentForm(request.POST)
-        if form.is_valid():
-            if request.user.is_authenticated:
-                comment = form.save(commit=False)
-                comment.post = post
-                comment.user = request.user
-                comment.save()
-                form = CommentForm()
-            else:
-                form.add_error(
-                    None, "You must be logged in to post a comment."
-                )
-        else:
-            if not request.user.is_authenticated:
-                form.add_error(
-                    None, "You must be logged in to post a comment."
-                )
+        if not request.user.is_authenticated:
+            form.add_error(
+                None, "You must be logged in to post a comment."
+            )
+        elif form.is_valid():
+            comment = form.save(commit=False)
+            comment.post = post
+            comment.user = request.user
+            comment.save()
+            form = CommentForm()
     else:
         form = CommentForm()
 
