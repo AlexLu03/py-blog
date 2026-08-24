@@ -22,7 +22,7 @@ def index(request: HttpRequest) -> HttpResponse:
     return render(request, "blog/index.html", context=context)
 
 
-def PostDetailView(request: HttpRequest, pk: int) -> HttpResponse:
+def postdetailview(request: HttpRequest, pk: int) -> HttpResponse:
     post = get_object_or_404(Post.objects.select_related("owner"), id=pk)
 
     comments = Commentary.objects.filter(post=post)
@@ -38,10 +38,14 @@ def PostDetailView(request: HttpRequest, pk: int) -> HttpResponse:
                 comment.save()
                 form = CommentForm()
             else:
-                form.add_error(None, "You must be logged in to post a comment.")
+                form.add_error(
+                    None, "You must be logged in to post a comment."
+                )
         else:
             if not request.user.is_authenticated:
-                form.add_error(None, "You must be logged in to post a comment.")
+                form.add_error(
+                    None, "You must be logged in to post a comment."
+                )
     else:
         form = CommentForm()
 

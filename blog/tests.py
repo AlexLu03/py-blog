@@ -1,9 +1,8 @@
-from django.test import TestCase
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
-from django.contrib.auth import get_user_model
 
-from blog.models import Post, Commentary
+from blog.models import Commentary, Post
 
 
 class BlogTests(TestCase):
@@ -14,12 +13,12 @@ class BlogTests(TestCase):
         )
 
     def test_index_orders_posts_by_created_time_desc(self):
-        post_older = Post.objects.create(
+        Post.objects.create(
             title="Older",
             content="old content",
             owner=self.user,
         )
-        post_newer = Post.objects.create(
+        Post.objects.create(
             title="Newer",
             content="new content",
             owner=self.user,
@@ -50,7 +49,9 @@ class BlogTests(TestCase):
             {"content": "Hello"},
             follow=True,
         )
-        self.assertContains(response, "You must be logged in to post a comment.")
+        self.assertContains(
+            response, "You must be logged in to post a comment."
+        )
 
     def test_authenticated_user_can_post_comment(self):
         post = Post.objects.create(
@@ -60,7 +61,7 @@ class BlogTests(TestCase):
         )
         self.client.login(username="alice", password="secret123")
 
-        response = self.client.post(
+        self.client.post(
             reverse("blog:post-detail", args=[post.pk]),
             {"content": "Comment from user"},
             follow=True,
