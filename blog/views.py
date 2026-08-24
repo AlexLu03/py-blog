@@ -2,6 +2,7 @@ from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from blog.models import Post, Commentary
 from django.core.paginator import Paginator
+from blog.forms import CommentForm
 
 
 def index(request: HttpRequest) -> HttpResponse:
@@ -21,23 +22,28 @@ def index(request: HttpRequest) -> HttpResponse:
     return render(request, "blog/index.html", context=context)
 
 
-def PostDetailView(request: HttpRequest, post_id: int) -> HttpResponse:
-    post = get_object_or_404(Post.objects.select_related("owner"), id=post_id)
+def PostDetailView(request: HttpRequest, pk: int) -> HttpResponse:
+    post = get_object_or_404(Post.objects.select_related("owner"), id=pk)
 
     comments = Commentary.objects.filter(post=post)
     sort_param = request.GET.get("sort")
-    comment_error = None
 
     if request.method == "POST":
-        content = request.POST.get("content")
-        if content and request.user.is_authenticated:
-            Commentary.objects.create(
-                post=post,
-                content=content,
-                user=request.user,
-            )
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            if request.user.is_authenticated:
+                comment = form.save(commit=False)
+                comment.post = post
+                comment.user = request.user
+                comment.save()
+                form = CommentForm()
+            else:
+                form.add_error(None, "You must be logged in to post a comment.")
         else:
-            comment_error = "You must be logged in to post a comment."
+            if not request.user.is_authenticated:
+                form.add_error(None, "You must be logged in to post a comment.")
+    else:
+        form = CommentForm()
 
     if sort_param == "time_desc":
         comments = comments.order_by("-created_time")
@@ -50,9 +56,9 @@ def PostDetailView(request: HttpRequest, post_id: int) -> HttpResponse:
 
     context = {
         "post": post,
-        "sort_param": sort_param,
         "comments": comments,
-        "comment_error": comment_error,
+        "sort_param": sort_param,
+        "form": form,
     }
 
     return render(request, "blog/post_detail.html", context=context)

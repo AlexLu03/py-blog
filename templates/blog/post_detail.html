@@ -1,15 +1,15 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
 
 {% block content %}
   {% if post %}
     <h1>{{ post.title }}</h1>
     <p>{{ post.content }}</p>
 
-
     <h2>Your Comment:</h2>
     <form method="post">
       {% csrf_token %}
-      <textarea name="content" placeholder="Write your comment here..."></textarea>
+      {{ form|crispy }}
       <button type="submit">Submit Comment</button>
     </form>
 
@@ -37,8 +37,7 @@
     <p>Post not found.</p>
   {% endif %}
 
-<button>
-  <a href="{% url 'blog:index' %}">Go to home page</a>
-</button>
-
+  <button>
+    <a href="{% url 'blog:index' %}">Go to home page</a>
+  </button>
 {% endblock %}
