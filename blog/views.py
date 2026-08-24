@@ -22,7 +22,7 @@ def index(request: HttpRequest) -> HttpResponse:
     return render(request, "blog/index.html", context=context)
 
 
-def PostDetailView(request: HttpRequest, pk: int) -> HttpResponse:
+def post_detail_view(request: HttpRequest, pk: int) -> HttpResponse:
     post = get_object_or_404(Post.objects.select_related("owner"), id=pk)
 
     comments = Commentary.objects.filter(post=post)
